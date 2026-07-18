@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>העלאת קובץ 📄</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="upload-container">
+    <div class="icon">📤</div>
+    <h1>העלאת קובץ</h1>
+    <p class="subtitle">בחר תמונה כדי להעלות אותה לענן</p>
+
+    <form id="uploadForm" enctype="multipart/form-data">
+      <label for="fileInput" class="file-label">
+        <span id="fileName">לחץ לבחירת קובץ</span>
+        <input type="file" name="image" id="fileInput" accept="image/*" required>
+      </label>
+
+      <button type="submit">העלה קובץ</button>
+    </form>
+
+    <p id="status"></p>
+  </div>
+
+  <script src="upload.js"></script>
+</body>
+</html>
