@@ -2,12 +2,10 @@ async function formUpload(file) {
   const formData = new FormData();
 
   formData.append("image", file);
-
   const response = await fetch("http://localhost:3000/upload", {
-    method: "POST",
-    body: formData,
-  });
-
+  method: "POST",
+  body: formData,
+});
   const data = await response.json();
 
   console.log(data);

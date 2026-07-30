@@ -38,6 +38,7 @@ app.get("/test", (req, res) => {
     message: "Server and CORS are working",
   });
 });
+app.get("/health", (req, res) => res.status(200).json({ status: "ok" }));
 
 app.post("/upload", upload.single("image"), async (req, res) => {
   try {
