@@ -21,7 +21,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # התחברות לחשבון ה-AWS שלכם באמצעות ה-Secrets הייעודיים ל-GitHub Actions
+      # התחברות לחשבון ה-AWS שלנו באמצעות ה-Secrets הייעודיים ל-GitHub Actions
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
