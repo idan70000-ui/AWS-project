@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout
+      # 1. Checkout השלב הזה מוריד אליה את הקוד
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -33,7 +33,7 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      # 2. Build Docker Image + 3. Push Image to ECR
+      # 2. Build Docker Image + . Push Image to ECR
       - name: Build, tag, and push image to ECR
         id: build-image
         env:
