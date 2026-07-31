@@ -1,0 +1,24 @@
+1) כתיבת DOCKERFILLE לכל השלבים שלנו, מאפשר שני מצבי build מאותו קובץ — development עם nodemon וכל ה-dependencies (לעבודה שוטפת), 
+ו-production עם npm ci --omit=dev בלבד (image קטן יותר, בלי כלי פיתוח מיותרים). USER node מוודא שהקונטיינר לא רץ כ-root — עקרון אבטחה בסיסי.
+בנוסף גם הוספנו HEALTH CHECK, אין דרך אוטומטית לבדוק אם האפליקציה חיה. זה נדרש גם ל-Docker healthcheck וגם (בהמשך) ל-ALB Target Group.
+ובנוסף גם תיקנו את ה-healthcheck לפנות לפורט הפנימי (3000, לא 3001) כי ה-healthcheck רץ בתוך הקונטיינר, לא מה-host.
+למה: healthcheck שפונה לפורט הלא נכון תמיד ייכשל, גם אם האפליקציה בריאה לגמרי.
+
+
+
+2)ECR → Create repository → cloud-images
+למה: ECS Fargate לא יכול למשוך images מ-Docker Hub פרטי בלי חיבור נוסף; ECR הוא ה"מרשם" הטבעי בתוך AWS, עם אינטגרציה מובנית ל-IAM ול-ECS.
+
+
+3) docker build --platform linux/amd64 --target production -t cloud-images:latest .
+בלי הדגל הזה, ה-image לא ירוץ בענן בכלל.
+
+
+4) Tag ו-Push ל-ECR:
+
+docker tag cloud-images:latest 099968996683.dkr.ecr.eu-north-1.amazonaws.com/cloud-images:latest
+docker push ...
+למה: docker build יוצר image מקומי בלבד. צריך לתייג אותו בדיוק לפי כתובת ה-repository ב-ECR, ואז לדחוף — זה מה שהופך אותו לזמין לכל שירות AWS אחר (כמו ECS) למשוך אותו.
+
+5) התוצאה הסופית של חלק 1: image שניתן למשוך מ-ECR ולהריץ בכל מקום — בדיוק מה שנדרש ב"בסיום החלק".
+

@@ -1,0 +1,38 @@
+1. ECR — מקום לאחסן את ה-Image
+יצרנו repository בשם cloud-images (region: eu-north-1). דחפנו לשם את ה-Docker image שבנינו מקומית, אחרי שתייגנו אותו לפי כתובת ה-repository.
+
+2. IAM — הרשאות למשתמש שעבד מה-CLI
+הוספנו למשתמש cloud-images (זה שאיתו התחברת מהמחשב) שתי הרשאות:
+AmazonEC2ContainerRegistryFullAccess — כדי שיוכל להתחבר ולדחוף ל-ECR
+AmazonECS_FullAccess — כדי שיוכל ליצור cluster ב-ECS (וגם ל-service-linked role שנוצר אוטומטית)
+
+3. VPC — בדקנו את התשתית הקיימת
+השתמשנו ב-VPC ברירת המחדל (vpc-0d2f9d94f65626f7d) שכבר היה קיים, עם 3 subnets ב-3 Availability Zones שונים (eu-north-1a/1b/1c) — זה מה שמאפשר High Availability אמיתי.
+
+4. Security Groups — חומת אש בין הרכיבים
+יצרנו שניים:
+alb-sg — מאפשר תנועת HTTP (פורט 80) מכל האינטרנט
+ecs-tasks-security-group — מאפשר תנועה רק מ-alb-sg, בפורט 3000. כך הקונטיינרים לא חשופים ישירות לאינטרנט, רק ה-ALB יכול לדבר איתם.
+
+5. Target Group — "מטרה" עבור ה-Load Balancer
+יצרנו cloud-images-tg מסוג IP targets (נדרש ל-Fargate), עם health check שמצביע ל-/health בפורט 3000.
+
+6. Application Load Balancer — נקודת הכניסה הציבורית
+יצרנו cloud-images-alb, Internet-facing, פרוס על שלושת ה-subnets, עם Security Group alb-sg. הגדרנו Listener על פורט 80 שמפנה (forward) ל-cloud-images-tg.
+
+7. ECS Cluster — "המארח" הלוגי
+יצרנו cloud-images-cluster עם Infrastructure = Fargate only (serverless, בלי ניהול שרתים).
+
+8. Task Definition — "המתכון" להרצת הקונטיינר
+יצרנו cloud-images-task שמגדיר: ה-image מ-ECR, CPU (0.5 vCPU) וזיכרון (2GB), פורט 3000, ושני IAM Roles:
+Task Execution Role (ecsTaskExecutionRole, ברירת מחדל) — מאפשר ל-ECS למשוך את ה-image ולכתוב logs
+Task Role (cloud-images-task-role, יצרנו custom) — עם policy מצומצם שנותן לאפליקציה רק s3:PutObject/s3:GetObject על ה-bucket הספציפי — בלי שום access key
+הוספנו גם Environment Variables: רק S3_BUCKET ו-AWS_REGION — בלי AWS_ACCESS_KEY_ID/SECRET.
+
+9. ECS Service — הרצה בפועל, עם 2 עותקים
+יצרנו cloud-images-service מתוך ה-Task Definition, עם:
+Desired tasks = 2 (עמידה בדרישת "לפחות 2 Tasks")
+Networking: 3 subnets + ecs-tasks-security-group (לא default!) + Public IP מופעל
+Load balancing: חיבור ל-ALB הקיים + Target Group הקיים (לא יצרנו חדשים)
+התוצאה
+ה-Service העלה 2 Tasks, נרשמו אוטומטית ב-Target Group, עברו health check בהצלחה ("2 Healthy"), וה-ALB התחיל לנתב תנועה אליהם. בדקנו בדפדפן דרך ה-DNS name של ה-ALB ואישרנו שהאפליקציה עולה ושה-upload ל-S3 עובד — בלי שום access key בקונטיינר, רק דרך ה-Task Role.
