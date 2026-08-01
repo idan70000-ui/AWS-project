@@ -1,0 +1,70 @@
+משימה 4:
+
+שלב 1 — יצירת משתמש IAM ייעודי
+
+יצרנו משתמש github-actions-deploy ב-IAM
+צירפנו לו הרשאות מוגבלות
+יצרנו לו Access Key + Secret Key
+
+
+שלב 2 — שמירת המפתחות ב-GitHub Secrets
+
+הוספנו ב-Settings → Secrets and variables → Actions
+בתוך קובץ ENV. את המפתחות הרלוונטים לנו
+
+
+שלב 3 — כתיבת קובץ ה-Workflow (.github/workflows/docker.yml)
+
+בנינו workflow עם 7 שלבים:
+
+Checkout — מוריד את הקוד מהריפו לתוך המכונה הזמנית
+Configure AWS credentials — המכונה מזדהה מול AWS בתור github-actions-deploy
+Login to ECR — מקבל טוקן זמני לדחוף ל-registry הספציפי
+Build, tag, push — בונה image מה-Dockerfile, מתייג עם github.sha + latest, דוחף ל-ECR
+Download task definition — מוריד את המתכון הקיים מ-ECS (JSON)
+Render task definition — עורך רק את שדה ה-image בקובץ המקומי
+Deploy to ECS — עם wait-for-service-stability: true, שולח את המתכון המעודכן ומחכה לאישור אמיתי שהגרסה יציבה
+
+
+שלב 4 — דיבוג בפועל (מה שקרה בדרך)
+
+Docker Hub → ECR: הקובץ המקורי דחף ל-Docker Hub; שכתבנו אותו לדחוף ל-ECR
+Secrets חסרים: קיבלנו שגיאת "Credentials could not be loaded" עד שהוספנו את ה-Secrets בפועל
+Race condition: כמה push ברצף יצרו כמה runs מתחרים על אותו Service; פתרנו על ידי ביטול הישנים והנהגת כלל "push אחד, לחכות לסיום"
+CORS/localhost bug: תיקנו upload.js מ-http://localhost:3000/upload ל-/upload (יחסי) כדי שהעלאת קבצים תעבוד גם בפרוד
+
+
+שלב 5 — אימות
+
+שינינו טקסט גלוי באפליקציה (הוספת אימוג'י)
+push → run הצליח 
+פתחנו את כתובת ה-ALB — הגרסה החדשה הופיעה, בלי מגע ידני ב-AWS Console
+
+
+
+
+
+משימה 5:
+
+שלב 1 — הגדרת Health Check על ה-Target Group
+
+ב-EC2 Console → Target Groups → cloud-images-tg → Health checks
+הגדרנו:
+Path: /health (ה-endpoint הייעודי ב-app.js)
+Healthy threshold: 2 (במקום 5 המקורי)
+Interval: 15 שניות (במקום 30)
+Timeout: 5 שניות
+
+
+שלב 2 — עדכון Deployment Configuration ב-ECS Service
+
+ECS Console → Service cloud-images-service → Update service → Deployment options:
+Rolling update (במקום Blue/Green וכו')
+Min running tasks %: 100 — לעולם לא לרדת מתחת לכמות המקורית
+Max running tasks %: 200 — מותר להכפיל זמנית כדי להעלות חדשות לפני הורדת ישנות
+
+
+שלב 3 — אימות התהליך
+
+ראינו ב-Deployment timeline את הסדר הנכון: "2 tasks started successfully" לפני "service has stopped 1 running tasks"
+
