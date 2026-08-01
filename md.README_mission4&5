@@ -29,9 +29,9 @@ Deploy to ECS — עם wait-for-service-stability: true, שולח את המתכ�
 שלב 4 — דיבוג בפועל (מה שקרה בדרך)
 
 Docker Hub → ECR: הקובץ המקורי דחף ל-Docker Hub; שכתבנו אותו לדחוף ל-ECR
-Secrets חסרים: קיבלנו שגיאת "Credentials could not be loaded" עד שהוספנו את ה-Secrets בפועל
-Race condition: כמה push ברצף יצרו כמה runs מתחרים על אותו Service; פתרנו על ידי ביטול הישנים והנהגת כלל "push אחד, לחכות לסיום"
-CORS/localhost bug: תיקנו upload.js מ-http://localhost:3000/upload ל-/upload (יחסי) כדי שהעלאת קבצים תעבוד גם בפרוד
+(בעיה שנתקלתי בה!) Secrets חסרים: קיבלנו שגיאת "Credentials could not be loaded" עד שהוספנו את ה-Secrets בפועל
+(פיתרון!) Race condition: כמה push ברצף יצרו כמה runs מתחרים על אותו Service; פתרנו על ידי ביטול הישנים והנהגת כלל "push אחד, לחכות לסיום"
+(עוד בעיה שנתקלתי בה !) CORS/localhost bug: תיקנו upload.js מ-http://localhost:3000/upload ל-/upload (יחסי) כדי שהעלאת קבצים תעבוד גם בפרוד
 
 
 שלב 5 — אימות
